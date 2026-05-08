@@ -69,6 +69,30 @@ def test_openai_prefix_stripped_for_direct_api():
     assert provider == 'openai'
 
 
+def test_nvidia_nim_preserves_full_model_path():
+    """nvidia/nemotron-* must keep the nvidia/ namespace for NVIDIA NIM."""
+    model, provider, base_url = _resolve_with_config(
+        'nvidia/nemotron-3-super-120b-a12b',
+        provider='nvidia',
+        base_url='https://integrate.api.nvidia.com/v1/',
+    )
+    assert model == 'nvidia/nemotron-3-super-120b-a12b'
+    assert provider == 'nvidia'
+    assert base_url == 'https://integrate.api.nvidia.com/v1/'
+
+
+def test_nvidia_nim_alias_preserves_full_model_path():
+    """nvidia-nim config alias should route as nvidia and keep full model ID."""
+    model, provider, base_url = _resolve_with_config(
+        'nvidia/nemotron-3-super-120b-a12b',
+        provider='nvidia-nim',
+        base_url='https://integrate.api.nvidia.com/v1/',
+    )
+    assert model == 'nvidia/nemotron-3-super-120b-a12b'
+    assert provider == 'nvidia'
+    assert base_url == 'https://integrate.api.nvidia.com/v1/'
+
+
 # ── Cross-provider routing ───────────────────────────────────────────────
 
 def test_cross_provider_routes_through_openrouter():
