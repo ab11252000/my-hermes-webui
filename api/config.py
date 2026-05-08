@@ -1416,6 +1416,31 @@ def _base_url_points_at_local_server(base_url: str) -> bool:
         return False
 
 
+def _heal_nvidia_nim_model_id(model_id: str) -> str:
+    """Restore NVIDIA NIM namespace for legacy bare Nemotron-style IDs.
+
+    Older routing stripped ``nvidia/`` before persisting/using the model. NVIDIA
+    NIM expects namespaced IDs, so heal stale config/session values at resolve
+    time before they reach AIAgent or the auxiliary client.
+    """
+    model = str(model_id or "").strip()
+    if not model or "/" in model or model.startswith("@"):
+        return model
+
+    lower = model.lower()
+    for entry in _PROVIDER_MODELS.get("nvidia", []):
+        full = str(entry.get("id") or "").strip()
+        if "/" not in full:
+            continue
+        _prefix, bare = full.split("/", 1)
+        if bare.lower() == lower:
+            return full
+
+    if lower.startswith("nemotron-") or "nemotron-" in lower:
+        return f"nvidia/{model}"
+    return model
+
+
 def resolve_model_provider(model_id: str) -> tuple:
     """Resolve model name, provider, and base_url for AIAgent.
 
@@ -1462,6 +1487,9 @@ def resolve_model_provider(model_id: str) -> tuple:
     model_id = (model_id or "").strip()
     if not model_id:
         return model_id, config_provider, config_base_url
+
+    if _resolve_provider_alias(config_provider) == "nvidia":
+        model_id = _heal_nvidia_nim_model_id(model_id)
 
     # Custom providers declared in config.yaml should win over slash-based
     # OpenRouter heuristics. Their model IDs commonly contain '/' too.

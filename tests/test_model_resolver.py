@@ -93,6 +93,42 @@ def test_nvidia_nim_alias_preserves_full_model_path():
     assert base_url == 'https://integrate.api.nvidia.com/v1/'
 
 
+def test_nvidia_nim_heals_legacy_bare_nemotron_model():
+    """Stale bare Nemotron config should be restored before hitting NVIDIA."""
+    model, provider, base_url = _resolve_with_config(
+        'nemotron-3-super-120b-a12b',
+        provider='nvidia',
+        base_url='https://integrate.api.nvidia.com/v1/',
+    )
+    assert model == 'nvidia/nemotron-3-super-120b-a12b'
+    assert provider == 'nvidia'
+    assert base_url == 'https://integrate.api.nvidia.com/v1/'
+
+
+def test_nvidia_nim_heals_newer_bare_nemotron_model():
+    """Unlisted bare Nemotron IDs still need the NVIDIA namespace."""
+    model, provider, base_url = _resolve_with_config(
+        'nemotron-4-340b-instruct',
+        provider='nvidia',
+        base_url='https://integrate.api.nvidia.com/v1/',
+    )
+    assert model == 'nvidia/nemotron-4-340b-instruct'
+    assert provider == 'nvidia'
+    assert base_url == 'https://integrate.api.nvidia.com/v1/'
+
+
+def test_nvidia_nim_alias_heals_legacy_bare_nemotron_model():
+    """NVIDIA aliases should also heal stale bare Nemotron IDs."""
+    model, provider, base_url = _resolve_with_config(
+        'nemotron-3-super-120b-a12b',
+        provider='nvidia-nim',
+        base_url='https://integrate.api.nvidia.com/v1/',
+    )
+    assert model == 'nvidia/nemotron-3-super-120b-a12b'
+    assert provider == 'nvidia'
+    assert base_url == 'https://integrate.api.nvidia.com/v1/'
+
+
 # ── Cross-provider routing ───────────────────────────────────────────────
 
 def test_cross_provider_routes_through_openrouter():
